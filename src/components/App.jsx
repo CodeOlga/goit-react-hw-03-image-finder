@@ -56,9 +56,9 @@ class App extends Component {
     }
   }
   
-  handleFormSubmit = inputSearch => {
-    this.setState({inputSearch})
-  }
+    handleFormSubmit = inputSearch => {
+    this.setState({ inputSearch, page: 1, hits: [] });
+  };
 
   handleLoadMore = () => {
     this.setState(prevState => ({ page: prevState.page + 1 }))
