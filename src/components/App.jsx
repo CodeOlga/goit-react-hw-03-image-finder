@@ -1,96 +1,108 @@
 import { Component } from 'react';
-import { ToastContainer } from 'react-toastify';
- import 'react-toastify/dist/ReactToastify.css';
 import Searchbar from './Searchbar/Searchbar';
+import { ColorRing } from  'react-loader-spinner'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import { getImages } from 'services/getImages';
-// import api from '../services/getImages';
 import ImageGallery from './ImageGallery/ImageGallery';
 import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
-// import Button from './Button/Button';
-// import Loader from './Loader/Loader';
+import Button from './Button/Button';
+import Loader from './Loader/Loader';
 // import Modal from './Modal/Modal';
 import css from './App.module.css';
-// import {ImSearch } from 'react-icons/im'
 
 class App extends Component {
-   state = {
-     inputSearch: '',
-      //  images: null,
-     hits: [],
-     id: '',
-     webformatURL: '',
-     largeImageURL: '',
-
-   loading: false
+  state = {
+    inputSearch: '',
+    hits: [],
+    page: 1,
+    loading: false,
+    error: null
   }
-  // state = {
-  //   images: null,
-  //   loading: false
-  // }
-
-
-  // componentDidMount() {
-    // console.log('mount')
-    // this.setState({loading: true})
-    // fetch('https://pixabay.com/api/?q=`${this.inputSearch}`&page=1&key=37056848-912ded0eb5e75838ece32e5ab&image_type=photo&orientation=horizontal&per_page=12')
-    //   .then(res => res.json())
-    //   .then(data => this.setState({ data }))
-    //   .finally(() => this.setState({ loading: false }))
-    // console.log(data)
-
-    // const contacts = localStorage.getItem('contacts');
-    // const parsedContacts = JSON.parse(contacts);
-
-    // if (parsedContacts) {
-    //   this.setState({contacts: parsedContacts})
-    // }
-  // }
 
   componentDidUpdate(_, prevState) {
-        // console.log('update')
-    // if (this.state.contacts !== prevState.contacts) {
-    //   localStorage.setItem('contacts', JSON.stringify(this.state.contacts))
-    // }
-    // this.setState({ loading: true })
-    if (this.state.inputSearch !== prevState.inputSearch) {
-      // fetch('https://pixabay.com/api/?q=`${this.inputSearch}`&page=1&key=37056848-912ded0eb5e75838ece32e5ab&image_type=photo&orientation=horizontal&per_page=12')
-      //   .then(res => res.json())
-      //   .then(hits => this.setState({ hits }))
-      //   .finally(() => this.setState({ loading: false }))
-      getImages(this.state.inputSearch)
-        .then(res => res.json())
-        .then(hits => this.setState(hits));
+    const { inputSearch, page } = this.state;
 
+    if (inputSearch !== prevState.inputSearch || page !== prevState.page) {
+          this.setState({ loading: true, error: null })
+
+      getImages(inputSearch, page)
+        //-------1----------
+        // .then(res => {
+        //   if (!res.ok) {
+        //     throw new Error(res.status)
+        //   }
+        //  return res.json()
+        // })
+        //-------2-------Репета
+          .then(res => {
+            if (res.ok) {
+              return res.json()
+            }
+            return Promise.reject(
+              new Error(`Not found ${inputSearch}`))
+          })
+        .then(data => {
+          this.setState(prevState => ({
+            hits: [...prevState.hits, ...data.hits]
+          }));
+        })
+        //--------1----------
+        // .catch(error => this.setState({ error: error.message }))
+          //-------2-------Репета
+        .catch(error => this.setState({ error }))
+        .finally(() => this.setState({ loading: false }))
     }
   }
   
   handleFormSubmit = inputSearch => {
-   this.setState({inputSearch})
+    this.setState({inputSearch})
   }
+
+  handleLoadMore = () => {
+    this.setState(prevState => ({ page: prevState.page + 1 }))
+  }
+
   render() {
-    const { hits } = this.state;
-  
+    const { hits, loading, error } = this.state;
+    const showLoadMoreBtn = hits.length > 0;
+
     return (
-          // <div>
-     <div className={css.app}> 
-          <Searchbar onSubmit={ this.handleFormSubmit} />
-          {/* {hits && hits.map(el => { return <li>{el.webformatURL}</li>})} */}
-          {hits && (
+      <div className={css.app}>
+        {/* Репета */}
+        {error && <h2>{error.message}</h2>}
+
+        <Searchbar onSubmit={ this.handleFormSubmit} />
+
+        {loading && 
+          <Loader>
+          <ColorRing
+            visible={true}
+            height="80"
+            width="80"
+            ariaLabel="blocks-loading"
+            wrapperStyle={{}}
+            wrapperClass="blocks-wrapper"
+            colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
+          />
+        </Loader>}
+
+        {hits && 
           <ImageGallery>
               <ImageGalleryItem images={hits} />
           </ImageGallery>
-          )}
+          }
 
-          {/*  {this.state.loading && <h1>Loading...</h1>} */}
-          {/* {this.state.images && <div>{this.state.images.hits[0].tags}</div>} */} 
-        
-          {/* <Button /> */}
-          {/* <Loader /> */}
-          {/* <Modal /> */}
+        {showLoadMoreBtn && 
+          <Button onBtnClick={() => this.handleLoadMore()} />
+        }
+
+        {/* <Modal /> */}
           <ToastContainer autoClose={3000} />
     </div>
   );
   }
-
 };
+
 export default App;
