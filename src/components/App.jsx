@@ -49,14 +49,14 @@ class App extends Component {
           }));
         })
         //--------1----------
-        // .catch(error => this.setState({ error: error.message }))
+          //  .catch(error => this.setState({ error }))
           //-------2-------Репета
-        .catch(error => this.setState({ error }))
+        .catch(error => this.setState({ error: error.message }))
         .finally(() => this.setState({ loading: false }))
     }
   }
   
-    handleFormSubmit = inputSearch => {
+  handleFormSubmit = inputSearch => {
     this.setState({ inputSearch, page: 1, hits: [] });
   };
 
