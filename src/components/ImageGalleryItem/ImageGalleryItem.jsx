@@ -1,6 +1,7 @@
+import PropTypes from 'prop-types';
 import css from './ImageGalleryItem.module.css';
 
-const ImageGalleryItem = ({ images}) => {
+const ImageGalleryItem = ({ images }) => {
   return (
     <>
       {images.map(({ id, webformatURL,tags}) => {
@@ -14,4 +15,9 @@ const ImageGalleryItem = ({ images}) => {
   )
 }
 
+ImageGalleryItem.propTypes = {
+    id: PropTypes.number,
+    webformatURL: PropTypes.string,
+    tags: PropTypes.string
+}
 export default ImageGalleryItem;

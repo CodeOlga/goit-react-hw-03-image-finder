@@ -6,6 +6,6 @@ const ImageGallery = ({children}) => {
       {children}
     </ul>
   )
-  
 }
+
 export default ImageGallery;

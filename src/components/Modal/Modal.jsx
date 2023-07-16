@@ -1,9 +1,10 @@
-// import css from './Modal.module.css';
+// import PropTypes from 'prop-types';
+import css from './Modal.module.css';
 const Modal = () => {
   return (
-  <div className="overlay">
-  <div className="modal">
-    <img src="" alt="" />
+  <div className={css.overlay}>
+  <div className={css.modal}>
+    {/* <img src="" alt="" /> */}
   </div>
 </div>
 )

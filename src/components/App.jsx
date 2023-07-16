@@ -1,10 +1,10 @@
 import { Component } from 'react';
-import Searchbar from './Searchbar/Searchbar';
 import { ColorRing } from  'react-loader-spinner'
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { getImages } from 'services/getImages';
+import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
 import Button from './Button/Button';
@@ -28,14 +28,6 @@ class App extends Component {
           this.setState({ loading: true, error: null })
 
       getImages(inputSearch, page)
-        //-------1----------
-        // .then(res => {
-        //   if (!res.ok) {
-        //     throw new Error(res.status)
-        //   }
-        //  return res.json()
-        // })
-        //-------2-------Репета
           .then(res => {
             if (res.ok) {
               return res.json()
@@ -44,20 +36,24 @@ class App extends Component {
               new Error(`Not found ${inputSearch}`))
           })
         .then(data => {
+          if (!data.totalHits) {
+            return toast.error(`No results found for ${inputSearch}`);
+          }
           this.setState(prevState => ({
             hits: [...prevState.hits, ...data.hits]
           }));
         })
-        //--------1----------
-          //  .catch(error => this.setState({ error }))
-          //-------2-------Репета
-        .catch(error => this.setState({ error: error.message }))
+        .catch(error => {
+          // this.setState({ error: error.message })
+          return toast.error(`Failed, try later`)
+        })
         .finally(() => this.setState({ loading: false }))
     }
   }
   
   handleFormSubmit = inputSearch => {
-    this.setState({ inputSearch, page: 1, hits: [] });
+    //потрібно очищувати hits, щоб при новому пошуку оновлювався запит
+    this.setState({ inputSearch, page: 1, hits: [], error: null });
   };
 
   handleLoadMore = () => {
@@ -65,16 +61,17 @@ class App extends Component {
   }
 
   render() {
-    const { hits, loading, error } = this.state;
+    // const { hits, loading, error } = this.state;
+    const { hits, loading } = this.state;
     const showLoadMoreBtn = hits.length > 0;
 
     return (
       <div className={css.app}>
-        {/* Репета */}
-        {error && <h2>{error.message}</h2>}
 
         <Searchbar onSubmit={ this.handleFormSubmit} />
 
+        {/* //якщо кастомний текст */}
+        {/* {error && <h2>{error}</h2>} */}
         {loading && 
           <Loader>
           <ColorRing
@@ -99,7 +96,7 @@ class App extends Component {
         }
 
         {/* <Modal /> */}
-          <ToastContainer autoClose={3000} />
+        <ToastContainer autoClose={3000} />
     </div>
   );
   }
