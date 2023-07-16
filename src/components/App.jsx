@@ -9,7 +9,7 @@ import ImageGallery from './ImageGallery/ImageGallery';
 import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
 import Button from './Button/Button';
 import Loader from './Loader/Loader';
-// import Modal from './Modal/Modal';
+import Modal from './Modal/Modal';
 import css from './App.module.css';
 
 class App extends Component {
@@ -17,16 +17,18 @@ class App extends Component {
     inputSearch: '',
     hits: [],
     page: 1,
+    modalImageURL: '',
     loading: false,
-    error: null
+    showModal: false,
+    endOfCollection: false
   }
 
   componentDidUpdate(_, prevState) {
     const { inputSearch, page } = this.state;
 
     if (inputSearch !== prevState.inputSearch || page !== prevState.page) {
-          this.setState({ loading: true, error: null })
-
+      this.setState({ loading: true })
+      
       getImages(inputSearch, page)
           .then(res => {
             if (res.ok) {
@@ -37,14 +39,25 @@ class App extends Component {
           })
         .then(data => {
           if (!data.totalHits) {
+            //якщо користувач ввів неіснуючий запит
             return toast.error(`No results found for ${inputSearch}`);
           }
+
+            //завершення колекції
+          const totalPages = Math.ceil(data.totalHits / 12);
+          
+          if (page === totalPages) {
+            this.setState({ endOfCollection: true }); 
+            return toast.error('No more pictures');
+          }
+            //успішний запит
           this.setState(prevState => ({
-            hits: [...prevState.hits, ...data.hits]
-          }));
+            hits: [...prevState.hits, ...data.hits],
+            endOfCollection: false
+          }))
         })
         .catch(error => {
-          // this.setState({ error: error.message })
+          console.log(error)
           return toast.error(`Failed, try later`)
         })
         .finally(() => this.setState({ loading: false }))
@@ -52,26 +65,36 @@ class App extends Component {
   }
   
   handleFormSubmit = inputSearch => {
-    //потрібно очищувати hits, щоб при новому пошуку оновлювався запит
-    this.setState({ inputSearch, page: 1, hits: [], error: null });
-  };
+    //очищуємо hits, щоб при новому пошуку оновлювався запит
+    this.setState({ inputSearch, page: 1, hits: [] });
+  }
 
   handleLoadMore = () => {
     this.setState(prevState => ({ page: prevState.page + 1 }))
   }
 
+  openModal = imageURL => {
+    this.setState({ showModal: true, modalImageURL: imageURL })
+  }
+
+  closeModal = () => {
+    this.setState({ showModal: false, modalImageURL: ''})
+  }
+
+  handleImageClick = (imageURL) => {
+    this.setState({ showModal: true, modalImageURL: imageURL });
+  }
+
+
   render() {
-    // const { hits, loading, error } = this.state;
-    const { hits, loading } = this.state;
-    const showLoadMoreBtn = hits.length > 0;
+    const { hits, loading, showModal, modalImageURL, endOfCollection } = this.state;
+    const showLoadMoreBtn = hits.length > 0 && !endOfCollection; 
 
     return (
       <div className={css.app}>
 
         <Searchbar onSubmit={ this.handleFormSubmit} />
 
-        {/* //якщо кастомний текст */}
-        {/* {error && <h2>{error}</h2>} */}
         {loading && 
           <Loader>
           <ColorRing
@@ -87,19 +110,23 @@ class App extends Component {
 
         {hits && 
           <ImageGallery>
-              <ImageGalleryItem images={hits} />
+            <ImageGalleryItem images={hits} onImageClick={this.handleImageClick} />
           </ImageGallery>
           }
 
         {showLoadMoreBtn && 
           <Button onBtnClick={() => this.handleLoadMore()} />
-        }
+        } 
 
-        {/* <Modal /> */}
+        {showModal &&
+          <Modal onClose={this.closeModal}>
+          <img src={modalImageURL} alt='Modal' />
+        </Modal>}
+        
         <ToastContainer autoClose={3000} />
-    </div>
-  );
+      </div>
+    )
   }
-};
+}
 
 export default App;
